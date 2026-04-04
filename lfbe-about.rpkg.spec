@@ -5,20 +5,24 @@ Summary:        About dialog for the LFBE Desktop Environment
 License:        GPL-3.0-or-later
 URL:            https://github.com/Emkamil/lfbe-about
 
-Source0:        %{name}-%{version}.tar.gz
+%global forgeurl https://github.com/Emkamil/lfbe-about
+%global tag        %{version}
+%global commit     %{version}
 
-BuildRequires:  rust-packaging
-BuildRequires:  cargo
-BuildRequires:  pkgconfig(gtk4)
-BuildRequires:  pkgconfig(libadwaita-1)
-BuildRequires:  gettext
+Source0: %{forgeurl}/archive/%{tag}/%{name}-%{tag}.tar.gz
+
+BuildRequires: rust-packaging
+BuildRequires: cargo
+BuildRequires: pkgconfig(gtk4)
+BuildRequires: pkgconfig(libadwaita-1)
+BuildRequires: gettext
 
 %description
 A modern and lightweight about dialog for the Lightweight Fast Beautiful Environment (LFBE),
 built with Rust, GTK4 and Libadwaita.
 
 %prep
-%autosetup
+%autosetup -n %{name}-%{tag}
 
 %build
 %cargo_build
