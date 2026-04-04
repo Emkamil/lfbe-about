@@ -18,7 +18,7 @@ A modern and lightweight about dialog for the Lightweight Fast Beautiful Environ
 built with Rust, GTK4 and Libadwaita.
 
 %prep
-%autosetup -n %{name}-%{version}
+%setup -q -n %{name}
 
 %build
 cargo build --release
