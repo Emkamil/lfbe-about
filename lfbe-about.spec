@@ -1,5 +1,5 @@
 Name:           lfbe-about
-Version:        1.0.0alpha
+Version:        1.0.0
 Release:        1%{?dist}
 Summary:        About dialog for the LFBE Desktop Environment
 License:        GPL-3.0-or-later
