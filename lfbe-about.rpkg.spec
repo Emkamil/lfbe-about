@@ -1,21 +1,36 @@
 Name:           lfbe-about
-Version:        1.0.0
+Version:        1.0.1
 Release:        1%{?dist}
-Summary:        LFBE About Dialog
+Summary:        About dialog for the LFBE Desktop Environment
 License:        GPL-3.0-or-later
 URL:            https://github.com/Emkamil/lfbe-about
 
-# To makre nakazuje rpkg spakowanie bieżącego katalogu:
-Source:         {{{ git_dir_pack }}}
+Source0:        %{name}-%{version}.tar.gz
 
+BuildRequires:  rust-packaging
 BuildRequires:  cargo
-BuildRequires:  rust
 BuildRequires:  pkgconfig(gtk4)
 BuildRequires:  pkgconfig(libadwaita-1)
+BuildRequires:  gettext
 
 %description
-Modern about dialog for LFBE.
+A modern and lightweight about dialog for the Lightweight Fast Beautiful Environment (LFBE),
+built with Rust, GTK4 and Libadwaita.
 
 %prep
-# rpkg pakuje wszystko do katalogu o nazwie projektu
-{{{ git_dir_setup_macro }}}
+%autosetup
+
+%build
+%cargo_build
+
+%install
+%cargo_install
+
+%files
+%license LICENSE
+%doc README.md
+%{_bindir}/lfbe-about
+
+%changelog
+* Sat Apr 04 2026 Kamil <kamil@B450-AORUS-PRO> - 1.0.1-1
+- Initial release of lfbe-about
