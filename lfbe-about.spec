@@ -1,5 +1,5 @@
 Name:           lfbe-about
-Version:        1.0.0-alpha
+Version:        1.0.0alpha
 Release:        1%{?dist}
 Summary:        About dialog for the LFBE Desktop Environment
 License:        GPL-3.0-or-later
@@ -35,5 +35,5 @@ install -D -m 0755 target/release/lfbe-about %{buildroot}%{_bindir}/lfbe-about
 # %{_datadir}/applications/org.lfbe.about.desktop
 
 %changelog
-* Sat Apr 04 2026 Kamil <kamil@B450-AORUS-PRO> - 1.0.0-alpha-1
+* Sat Apr 04 2026 Kamil <kamil@B450-AORUS-PRO> - 1.0.0alpha-1
 - Initial release of lfbe-about
