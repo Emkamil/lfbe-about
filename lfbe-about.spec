@@ -1,35 +1,39 @@
 Name:           lfbe-about
 Version:        1.0.0-alpha
 Release:        1%{?dist}
-Summary:        About dialog for LFBE Desktop Environment
-License:        GPLv3
-URL:            https://github.com/Emkamil/lfbe-about
+Summary:        About dialog for the LFBE Desktop Environment
+License:        GPL-3.0-or-later
+URL:            https://github.com/twoj-user/lfbe-about
 
-BuildRequires:  rust-packaging
-BuildRequires:  meson
-BuildRequires:  gcc
+Source0:        %{name}-%{version}.tar.gz
+
+BuildRequires:  cargo
+BuildRequires:  rust
+BuildRequires:  pkgconfig(gtk4)
 BuildRequires:  pkgconfig(libadwaita-1)
 BuildRequires:  gettext
 
 %description
-About dialog for LFBE Desktop Environment.
+A modern and lightweight about dialog for the Lightweight Fast Beautiful Environment (LFBE),
+built with Rust, GTK4 and Libadwaita.
 
 %prep
 %autosetup
 
 %build
-%meson
-%meson_build
+cargo build --release
 
 %install
-%meson_install
-# Tutaj Meson sam rozmieści pliki w /usr/share/lfbe/licenses/ oraz /usr/share/locale/
+# Tworzenie struktury katalogów wewnątrz paczki
+install -D -m 0755 target/release/lfbe-about %{buildroot}%{_bindir}/lfbe-about
+
+# Jeśli masz plik .desktop lub ikony, dodaj je tutaj:
+# install -D -m 0644 data/org.lfbe.about.desktop %{buildroot}%{_datadir}/applications/org.lfbe.about.desktop
 
 %files
 %{_bindir}/lfbe-about
-%{_datadir}/lfbe/licenses/*.txt
-%{_datadir}/locale/*/LC_MESSAGES/*.mo
+# %{_datadir}/applications/org.lfbe.about.desktop
 
 %changelog
-* Sat Apr 04 2026 Kamil - 1.0.0-1
-- Initial release with licenses and translations support.
+* Sat Apr 04 2026 Kamil <kamil@B450-AORUS-PRO> - 1.0.0-alpha-1
+- Initial release of lfbe-about
