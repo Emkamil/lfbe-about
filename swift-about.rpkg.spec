@@ -23,7 +23,7 @@ Modern about dialog for Swift desktop.
 cargo build --release
 
 %install
-# Bin
+# Binary
 install -D -m 0755 target/release/swift-about %{buildroot}%{_bindir}/swift-about
 
 # Icons
@@ -37,6 +37,9 @@ install -D -m 0644 res/swift-about.desktop %{buildroot}%{_datadir}/applications/
 mkdir -p %{buildroot}%{_datadir}/locale/pl/LC_MESSAGES
 msgfmt po/pl.po -o %{buildroot}%{_datadir}/locale/pl/LC_MESSAGES/swift-about.mo
 
+mkdir -p %{buildroot}%{_datadir}/swift/licenses
+install -p -m 0644 res/licenses/*.txt %{buildroot}%{_datadir}/swift/licenses/
+
 %find_lang swift-about
 
 %files -f swift-about.lang
@@ -44,10 +47,12 @@ msgfmt po/pl.po -o %{buildroot}%{_datadir}/locale/pl/LC_MESSAGES/swift-about.mo
 %{_datadir}/icons/hicolor/scalable/apps/swift-about.svg
 %{_datadir}/icons/hicolor/symbolic/apps/swift-about-symbolic.svg
 %{_datadir}/applications/swift-about.desktop
+
+%{_datadir}/swift/licenses/*.txt
+
 %license res/licenses/*.txt
 
 %changelog
 * Sun Apr 05 2026 Kamil - 1.0.2-1
-- added icon and .desktop files installation
-- fixed locales naming consistency
--name changed to swift-about
+- added global licenses path in /usr/share/swift/licenses/
+- fixed icon and .desktop files installation

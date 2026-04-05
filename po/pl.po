@@ -13,8 +13,8 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: src/main.rs:53
-msgid "About"
-msgstr "O programie"
+msgid "About Swift"
+msgstr "O Swift"
 
 #: src/main.rs:77
 msgid "System"
@@ -29,8 +29,8 @@ msgid "Credits"
 msgstr "Podziękowania"
 
 #: src/main.rs:86
-msgid "Copyright"
-msgstr "Prawa autorskie"
+msgid "Licenses"
+msgstr "Licencje"
 
 #: src/main.rs:114
 msgid "System Information"
@@ -77,8 +77,8 @@ msgid "Graphics Units"
 msgstr "Karty graficzne"
 
 #: src/main.rs:265
-msgid "Swift is a set of programs that together provide a fully functional desktop environment."
-msgstr "Swift to zestaw programów, które razem tworzą w pełni funkcjonalne środowisko graficzne."
+msgid "Swift is a set of programs that together provide a fully functional desktop environment. Some of them:"
+msgstr "Swift to zestaw programów, które razem tworzą w pełni funkcjonalne środowisko graficzne. Oto niektóre z nich:"
 
 #: src/main.rs:276
 msgid "Window Manager"
@@ -112,14 +112,6 @@ msgstr "Menedżer plików"
 msgid "Manages files in a modern and fast way."
 msgstr "Zarządza plikami w nowoczesny i szybki sposób."
 
-#: src/main.rs:360
-msgid "License &amp; Copyright"
-msgstr "Licencja i prawa autorskie"
-
-#: src/main.rs:372
-msgid "This program is free software... (GPL v3 or later)"
-msgstr "Ten program jest wolnym oprogramowaniem... (GPL v3 lub nowsza)"
-
 #: src/main.rs:445
 msgid "Close"
 msgstr "Zamknij"
@@ -133,3 +125,12 @@ msgstr "Błąd"
 
 msgid "License file not found"
 msgstr "Plik licencji nie został odnaleziony"
+
+msgid "Core developers"
+msgstr "Główni deweloperzy"
+
+msgid "Legal Information"
+msgstr "Informacje prawne"
+
+msgid "Swift components are licensed under:"
+msgstr "Komponenty Swift są udostępniane na licencjach:"

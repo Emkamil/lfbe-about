@@ -7,5 +7,6 @@ Exec=swift-about
 Icon=swift-about
 Terminal=false
 Type=Application
-Categories=Settings;GTK;
+Categories=Settings;GTK;System;
 NoDisplay=false
+StartupWMClass=swift-about

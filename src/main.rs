@@ -3,13 +3,13 @@ mod metadata;
 use gettextrs::*;
 use gtk4::prelude::*;
 use gtk4::{
-    Application, Box as GtkBox, Button, Dialog, Grid, Image, Label, Orientation, ResponseType,
-    ScrolledWindow, SizeGroup, SizeGroupMode, TextBuffer, TextView, glib,
+    glib, Application, Box as GtkBox, Grid, Image, Label, Orientation, ScrolledWindow, SizeGroup,
+    SizeGroupMode, TextBuffer, TextView,
 };
 use libadwaita::prelude::*;
 use libadwaita::{
     ActionRow, ApplicationWindow as AdwApplicationWindow, HeaderBar, PreferencesGroup,
-    PreferencesPage, ViewStack, ViewSwitcherTitle,
+    PreferencesPage, ViewStack, ViewSwitcher, ViewSwitcherPolicy,
 };
 use std::{env, fs};
 
@@ -30,9 +30,7 @@ fn main() -> glib::ExitCode {
     let _ = textdomain("swift-about");
 
     libadwaita::init().expect("Nie udało się zainicjować Libadwaita");
-    let app = Application::builder()
-        .application_id("org.swift.about")
-        .build();
+    let app = Application::builder().application_id("swift-about").build();
 
     app.connect_activate(build_ui);
 
@@ -47,18 +45,26 @@ fn build_ui(app: &Application) {
         .default_height(620)
         .build();
 
-    let header_bar = HeaderBar::new();
-    let view_switcher_title = ViewSwitcherTitle::new();
-    header_bar.set_title_widget(Some(&view_switcher_title));
-
+    // 1. Najpierw tworzymy stos widoków (ViewStack)
     let view_stack = ViewStack::new();
-    view_switcher_title.set_stack(Some(&view_stack));
+
+    // 2. Potem tworzymy przełącznik i łączymy go ze stosem
+    let view_switcher = ViewSwitcher::new();
+    view_switcher.set_stack(Some(&view_stack));
+    view_switcher.set_policy(ViewSwitcherPolicy::Wide);
+
+    view_switcher.set_halign(gtk4::Align::Center);
+
+    // 3. Tworzymy pasek nagłówka i wstawiamy przełącznik
+    let header_bar = HeaderBar::new();
+    header_bar.set_title_widget(Some(&view_switcher));
 
     let sys_holder = GtkBox::new(Orientation::Vertical, 0);
     let info_holder = GtkBox::new(Orientation::Vertical, 0);
     let credits_holder = GtkBox::new(Orientation::Vertical, 0);
     let copy_holder = GtkBox::new(Orientation::Vertical, 0);
 
+    // Dodawanie stron do stosu
     let sp = view_stack.add_titled(&sys_holder, Some("system"), &gettext("System"));
     sp.set_icon_name(Some("computer-symbolic"));
 
@@ -68,15 +74,15 @@ fn build_ui(app: &Application) {
     let crp = view_stack.add_titled(&credits_holder, Some("credits"), &gettext("Credits"));
     crp.set_icon_name(Some("contact-new-symbolic"));
 
-    let cop = view_stack.add_titled(&copy_holder, Some("copyright"), &gettext("Copyright"));
-    cop.set_icon_name(Some("emblem-readonly-symbolic"));
+    let cop = view_stack.add_titled(&copy_holder, Some("copyright"), &gettext("Licenses"));
+    cop.set_icon_name(Some("x-office-document-symbolic"));
 
     sys_holder.append(&create_system_page());
 
+    // Reszta logiki (Lazy Loading) pozostaje bez zmian...
     view_stack.connect_visible_child_name_notify(move |stack| {
         if let (Some(name), Some(child)) = (stack.visible_child_name(), stack.visible_child()) {
             let holder = child.downcast_ref::<GtkBox>().expect("Must be a GtkBox");
-
             if holder.first_child().is_none() {
                 match name.as_str() {
                     "information" => holder.append(&create_information_page()),
@@ -84,7 +90,6 @@ fn build_ui(app: &Application) {
                     "copyright" => holder.append(&create_copyright_page()),
                     _ => {}
                 }
-                println!("Lazy Loading: Załadowano zasoby dla sekcji {}", name);
             }
         }
     });
@@ -102,6 +107,7 @@ fn build_ui(app: &Application) {
 
 fn create_system_page() -> PreferencesPage {
     let page = PreferencesPage::new();
+    page.add_css_class("background");
     let group = PreferencesGroup::new();
     group.set_title(&gettext("System Information"));
 
@@ -344,7 +350,7 @@ fn get_os_logo() -> String {
 
 fn create_information_page() -> PreferencesPage {
     let page = PreferencesPage::new();
-
+    page.add_css_class("background");
     let group = PreferencesGroup::new();
 
     let vbox = GtkBox::builder()
@@ -354,11 +360,13 @@ fn create_information_page() -> PreferencesPage {
         .margin_bottom(32)
         .margin_start(32)
         .margin_end(32)
+        .valign(gtk4::Align::Center) // Środkowanie pionowe całej zawartości
+        .halign(gtk4::Align::Center)
         .build();
 
     let logo = Image::builder()
-        .icon_name("preferences-system-details")
-        .pixel_size(96)
+        .icon_name("swift-about")
+        .pixel_size(128)
         .halign(gtk4::Align::Center)
         .build();
 
@@ -366,11 +374,10 @@ fn create_information_page() -> PreferencesPage {
 
     let desc = Label::builder()
 
-        .label(gettext("Swift is a set of programs that together provide a fully functional desktop environment."))
-
+        .label(gettext("Swift is a set of programs that together provide a fully functional desktop environment. Some of them:"))
         .wrap(true)
 
-        .halign(gtk4::Align::Start)
+        .halign(gtk4::Align::Center)
 
         .build();
 
@@ -443,7 +450,7 @@ fn create_information_page() -> PreferencesPage {
 
 fn create_credits_page() -> PreferencesPage {
     let page = PreferencesPage::new();
-
+    page.add_css_class("background");
     for group_data in contributors::SWIFT_CONTRIBUTORS {
         let pref_group = PreferencesGroup::new();
 
@@ -466,14 +473,12 @@ fn create_credits_page() -> PreferencesPage {
 
 fn create_copyright_page() -> PreferencesPage {
     let page = PreferencesPage::new();
-
+    page.add_css_class("background");
     let main_group = PreferencesGroup::new();
-    main_group.set_title(&gettext("Legal Information"));
+    main_group.set_title(&gettext("Licenses"));
 
     let info_label = Label::builder()
-        .label(gettext(
-            "This program is distributed under the following licenses:",
-        ))
+        .label(gettext("Swift components are licensed under:"))
         .wrap(true)
         .xalign(0.0)
         .margin_bottom(12)
@@ -572,10 +577,13 @@ fn show_license_dialog(parent: &AdwApplicationWindow, license_text: &str) {
 
     close_button.add_css_class("pill");
 
-    close_button.connect_clicked(glib::clone!(@weak window => move |_| {
-        window.close();
-    }));
-
+    close_button.connect_clicked(glib::clone!(
+        #[weak]
+        window,
+        move |_| {
+            window.close();
+        }
+    ));
     button_container.append(&close_button);
 
     main_vbox.append(&scrolled);
