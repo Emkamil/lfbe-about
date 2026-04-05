@@ -1,5 +1,5 @@
 Name:           swift-about
-Version:        1.0.2
+Version:        1.0.3
 Release:        1%{?dist}
 Summary:        SWIFT-desktop About Dialog
 License:        GPL-3.0-or-later
