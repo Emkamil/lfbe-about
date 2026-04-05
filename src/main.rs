@@ -17,21 +17,21 @@ fn main() -> glib::ExitCode {
     let args: Vec<String> = env::args().collect();
 
     if args.iter().any(|arg| arg == "--version" || arg == "-v") {
-        println!("Version: {}", metadata::LFBE_VERSION);
+        println!("Version: {}", metadata::SWIFT_VERSION);
 
-        println!("Codename: {}", metadata::LFBE_CODENAME);
+        println!("Codename: {}", metadata::SWIFT_CODENAME);
 
         return glib::ExitCode::SUCCESS;
     }
 
     setlocale(LocaleCategory::LcAll, "");
 
-    let _ = bindtextdomain("lfbe-about", "/usr/share/locale");
-    let _ = textdomain("lfbe-about");
+    let _ = bindtextdomain("swift-about", "/usr/share/locale");
+    let _ = textdomain("swift-about");
 
     libadwaita::init().expect("Nie udało się zainicjować Libadwaita");
     let app = Application::builder()
-        .application_id("org.lfbe.about")
+        .application_id("org.swift.about")
         .build();
 
     app.connect_activate(build_ui);
@@ -160,8 +160,8 @@ fn create_system_page() -> PreferencesPage {
             is_header_start: false,
         },
         InfoRow {
-            label: gettext("LFBE Version"),
-            value: format!("{} ({})", metadata::LFBE_VERSION, metadata::LFBE_CODENAME),
+            label: gettext("Swift Desktop Version"),
+            value: format!("{} ({})", metadata::SWIFT_VERSION, metadata::SWIFT_CODENAME),
             is_header_start: true,
         },
         InfoRow {
@@ -366,7 +366,7 @@ fn create_information_page() -> PreferencesPage {
 
     let desc = Label::builder()
 
-        .label(gettext("LFBE is a set of programs that together provide a fully functional desktop environment."))
+        .label(gettext("Swift is a set of programs that together provide a fully functional desktop environment."))
 
         .wrap(true)
 
@@ -386,13 +386,13 @@ fn create_information_page() -> PreferencesPage {
         (
             "application-menu",
             "Panel",
-            "lfbe-panel",
+            "swift-panel",
             "Provides a place for window buttons and menus.",
         ),
         (
             "preferences-other",
             "Desktop Manager",
-            "lfbe-desktop",
+            "swift-desktop",
             "Sets desktop backgrounds and icons.",
         ),
         (
@@ -444,7 +444,7 @@ fn create_information_page() -> PreferencesPage {
 fn create_credits_page() -> PreferencesPage {
     let page = PreferencesPage::new();
 
-    for group_data in contributors::LFBE_CONTRIBUTORS {
+    for group_data in contributors::SWIFT_CONTRIBUTORS {
         let pref_group = PreferencesGroup::new();
 
         pref_group.set_title(group_data.name);
@@ -586,7 +586,7 @@ fn show_license_dialog(parent: &AdwApplicationWindow, license_text: &str) {
 }
 
 fn get_license_text(name: &str) -> String {
-    let path = format!("/usr/share/lfbe/licenses/{}.txt", name.to_lowercase());
+    let path = format!("/usr/share/swift/licenses/{}.txt", name.to_lowercase());
 
     fs::read_to_string(&path).unwrap_or_else(|_| {
         format!(

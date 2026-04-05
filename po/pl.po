@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: lfbe-about\n"
+"Project-Id-Version: swift-about\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-03 22:00+0200\n"
 "PO-Revision-Date: 2026-04-03 22:05+0200\n"
@@ -49,8 +49,8 @@ msgid "System Type"
 msgstr "Typ systemu"
 
 #: src/main.rs:164
-msgid "LFBE Version"
-msgstr "Wersja LFBE"
+msgid "Swift Desktop Version"
+msgstr "Wersja pulpitu Swift"
 
 #: src/main.rs:169
 msgid "Kernel Version"
@@ -77,8 +77,8 @@ msgid "Graphics Units"
 msgstr "Karty graficzne"
 
 #: src/main.rs:265
-msgid "LFBE is a set of programs that together provide a fully functional desktop environment."
-msgstr "LFBE to zestaw programów, które razem tworzą w pełni funkcjonalne środowisko graficzne."
+msgid "Swift is a set of programs that together provide a fully functional desktop environment."
+msgstr "Swift to zestaw programów, które razem tworzą w pełni funkcjonalne środowisko graficzne."
 
 #: src/main.rs:276
 msgid "Window Manager"

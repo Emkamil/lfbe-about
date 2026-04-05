@@ -8,40 +8,40 @@ pub struct ContributorGroup {
     pub contributors: &'static [ContributorInfo],
 }
 
-pub static LFBE_CONTRIBUTORS_CORE: &[ContributorInfo] = &[ContributorInfo {
+pub static SWIFT_CONTRIBUTORS_CORE: &[ContributorInfo] = &[ContributorInfo {
     name: "Kamil Machowski",
     email: "machowskikamil@proton.me",
 }];
 /*
-pub static LFBE_CONTRIBUTORS_ACTIVE: &[ContributorInfo] = &[];
-pub static LFBE_CONTRIBUTORS_SERVER: &[ContributorInfo] = &[];
-pub static LFBE_CONTRIBUTORS_TRANSLATORS_SUPERVISION: &[ContributorInfo] = &[];
-pub static LFBE_CONTRIBUTORS_DOCUMENTATION_SUPERVISION: &[ContributorInfo] = &[];
-pub static LFBE_CONTRIBUTORS_PREVIOUS: &[ContributorInfo] = &[];
+pub static SWIFT_CONTRIBUTORS_ACTIVE: &[ContributorInfo] = &[];
+pub static SWIFT_CONTRIBUTORS_SERVER: &[ContributorInfo] = &[];
+pub static SWIFT_CONTRIBUTORS_TRANSLATORS_SUPERVISION: &[ContributorInfo] = &[];
+pub static SWIFT_CONTRIBUTORS_DOCUMENTATION_SUPERVISION: &[ContributorInfo] = &[];
+pub static SWIFT_CONTRIBUTORS_PREVIOUS: &[ContributorInfo] = &[];
 */
 
-pub static LFBE_CONTRIBUTORS: &[ContributorGroup] = &[
+pub static SWIFT_CONTRIBUTORS: &[ContributorGroup] = &[
     ContributorGroup {
         name: "Core developers",
-        contributors: LFBE_CONTRIBUTORS_CORE,
+        contributors: SWIFT_CONTRIBUTORS_CORE,
     }, /*ContributorGroup {
            name: "Active contributors",
-           contributors: LFBE_CONTRIBUTORS_ACTIVE,
+           contributors: SWIFT_CONTRIBUTORS_ACTIVE,
        },
        ContributorGroup {
            name: "Servers maintained by",
-           contributors: LFBE_CONTRIBUTORS_SERVER,
+           contributors: SWIFT_CONTRIBUTORS_SERVER,
        },
        ContributorGroup {
            name: "Translations supervision",
-           contributors: LFBE_CONTRIBUTORS_TRANSLATORS_SUPERVISION,
+           contributors: SWIFT_CONTRIBUTORS_TRANSLATORS_SUPERVISION,
        },
        ContributorGroup {
            name: "Documentation supervision",
-           contributors: LFBE_CONTRIBUTORS_DOCUMENTATION_SUPERVISION,
+           contributors: SWIFT_CONTRIBUTORS_DOCUMENTATION_SUPERVISION,
        },
        ContributorGroup {
            name: "Previous contributors",
-           contributors: LFBE_CONTRIBUTORS_PREVIOUS,
+           contributors: SWIFT_CONTRIBUTORS_PREVIOUS,
        },*/
 ];
