@@ -24,8 +24,8 @@ cargo build --release
 
 %install
 install -D -m 0755 target/release/swift-about %{buildroot}%{_bindir}/swift-about
-install -D -m 0644 data/swift-about.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/swift-about.svg
-install -D -m 0644 data/swift-about-symbolic.svg %{buildroot}%{_datadir}/icons/hicolor/symbolic/apps/swift-about-symbolic.svg
+install -D -m 0644 res/swift-about.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/swift-about.svg
+install -D -m 0644 res/swift-about-symbolic.svg %{buildroot}%{_datadir}/icons/hicolor/symbolic/apps/swift-about-symbolic.svg
 install -D -m 0644 data/swift-about.desktop %{buildroot}%{_datadir}/applications/swift-about.desktop
 
 # Instalacja tłumaczeń z automatyzacją
