@@ -1,5 +1,5 @@
 Name:           swift-about
-Version:        1.0.3
+Version:        1.0.4
 Release:        1%{?dist}
 Summary:        SWIFT-desktop About Dialog
 License:        GPL-3.0-or-later
@@ -53,6 +53,6 @@ install -p -m 0644 res/licenses/*.txt %{buildroot}%{_datadir}/swift/licenses/
 %license res/licenses/*.txt
 
 %changelog
-* Sun Apr 05 2026 Kamil - 1.0.2-3
+* Sun Apr 05 2026 Kamil - 1.0.4
 - added global licenses path in /usr/share/swift/licenses/
 - fixed icon and .desktop files installation
