@@ -4,8 +4,8 @@ version = "1.0.2"
 edition = "2024"
 
 [dependencies]
-gtk4 = "0.9"
-libadwaita = { version = "0.7", features = ["v1_6"] }
+gtk4 = "0.11"
+libadwaita = { version = "0.9", features = ["v1_6"] }
 gettext-rs = { version = "0.7", features = ["gettext-system"] }
 
 [profile.release]
