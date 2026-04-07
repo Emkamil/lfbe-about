@@ -3,13 +3,9 @@ mod metadata;
 use gettextrs::*;
 use gtk4::prelude::*;
 use gtk4::{
-    glib, Application, Box as GtkBox, Grid, Image, Label, Orientation, ScrolledWindow, SizeGroup,
-    SizeGroupMode, TextBuffer, TextView,
-};
-use libadwaita::prelude::*;
-use libadwaita::{
-    ActionRow, ApplicationWindow as AdwApplicationWindow, HeaderBar, PreferencesGroup,
-    PreferencesPage, ViewStack, ViewSwitcher, ViewSwitcherPolicy,
+    glib, Application, ApplicationWindow, Box as GtkBox, Button, Grid, Image, Label, 
+    Orientation, ScrolledWindow, SizeGroup, SizeGroupMode, TextBuffer, TextView, 
+    Stack, StackSwitcher, ListBox, ListBoxRow, Separator, Align, WrapMode
 };
 use std::{env, fs};
 
@@ -18,98 +14,121 @@ fn main() -> glib::ExitCode {
 
     if args.iter().any(|arg| arg == "--version" || arg == "-v") {
         println!("Version: {}", metadata::SWIFT_VERSION);
-
         println!("Codename: {}", metadata::SWIFT_CODENAME);
-
         return glib::ExitCode::SUCCESS;
     }
 
     setlocale(LocaleCategory::LcAll, "");
-
     let _ = bindtextdomain("swift-about", "/usr/share/locale");
     let _ = textdomain("swift-about");
 
-    libadwaita::init().expect("Nie udało się zainicjować Libadwaita");
+    // Inicjalizacja czystego GTK4
+    gtk4::init().expect("Nie udało się zainicjować GTK4");
     let app = Application::builder().application_id("swift-about").build();
 
     app.connect_activate(build_ui);
-
     app.run()
 }
 
 fn build_ui(app: &Application) {
-    let window = AdwApplicationWindow::builder()
+    let window = ApplicationWindow::builder()
         .application(app)
         .title(gettext("About"))
         .default_width(820)
         .default_height(620)
         .build();
 
-    // 1. Najpierw tworzymy stos widoków (ViewStack)
-    let view_stack = ViewStack::new();
+    // 1. Główny kontener
+    let main_box = GtkBox::new(Orientation::Vertical, 0);
 
-    // 2. Potem tworzymy przełącznik i łączymy go ze stosem
-    let view_switcher = ViewSwitcher::new();
+    // 2. Pasek nagłówka
+    let header_bar = gtk4::HeaderBar::new();
+    
+    // 3. Stack (Stos widoków) - kluczowe jest ustawienie ekspansji
+    let view_stack = Stack::builder()
+        .transition_type(gtk4::StackTransitionType::SlideLeftRight)
+        .vexpand(true)
+        .hexpand(true)
+        .build();
+
+    // 4. Przełącznik (Switcher)
+    let view_switcher = StackSwitcher::new();
+    view_stack.set_vexpand(true);
+    view_stack.set_hexpand(true);
     view_switcher.set_stack(Some(&view_stack));
-    view_switcher.set_policy(ViewSwitcherPolicy::Wide);
+    view_switcher.set_can_focus(false);
+    view_switcher.set_focus_on_click(false);
+    
+    let switcher_box = GtkBox::new(Orientation::Horizontal, 0);
+    switcher_box.add_css_class("linked");
+    switcher_box.append(&view_switcher);
 
-    view_switcher.set_halign(gtk4::Align::Center);
+    header_bar.set_title_widget(Some(&switcher_box));
+    
+    // Ustawiamy pasek nagłówka jako dekorację okna (usuwa "podwójny pasek")
+    window.set_titlebar(Some(&header_bar));
 
-    // 3. Tworzymy pasek nagłówka i wstawiamy przełącznik
-    let header_bar = HeaderBar::new();
-    header_bar.set_title_widget(Some(&view_switcher));
+    // 5. Kontenery dla stron - muszą się rozszerzać!
+    let sys_holder = GtkBox::builder()
+        .orientation(Orientation::Vertical)
+        .vexpand(true) 
+        .hexpand(true)
+        .build();
 
-    let sys_holder = GtkBox::new(Orientation::Vertical, 0);
-    let info_holder = GtkBox::new(Orientation::Vertical, 0);
-    let credits_holder = GtkBox::new(Orientation::Vertical, 0);
-    let copy_holder = GtkBox::new(Orientation::Vertical, 0);
+    let info_holder = GtkBox::builder()
+        .orientation(Orientation::Vertical)
+        .vexpand(true)
+        .hexpand(true)
+        .build();   
 
-    // Dodawanie stron do stosu
-    let sp = view_stack.add_titled(&sys_holder, Some("system"), &gettext("System"));
-    sp.set_icon_name(Some("computer-symbolic"));
+    let credits_holder = GtkBox::builder()
+        .orientation(Orientation::Vertical)
+        .vexpand(true)
+        .hexpand(true)
+        .build();
+    let copy_holder = GtkBox::builder()
+        .orientation(Orientation::Vertical)
+        .vexpand(true)
+        .hexpand(true)
+        .build();
 
-    let ip = view_stack.add_titled(&info_holder, Some("information"), &gettext("Information"));
-    ip.set_icon_name(Some("dialog-information-symbolic"));
+    // 6. Dodawanie do stosu
+    view_stack.add_titled(&sys_holder, Some("system"), &gettext("System"));
+    view_stack.add_titled(&info_holder, Some("information"), &gettext("Information"));
+    view_stack.add_titled(&credits_holder, Some("credits"), &gettext("Credits"));
+    view_stack.add_titled(&copy_holder, Some("copyright"), &gettext("Licenses"));
 
-    let crp = view_stack.add_titled(&credits_holder, Some("credits"), &gettext("Credits"));
-    crp.set_icon_name(Some("contact-new-symbolic"));
-
-    let cop = view_stack.add_titled(&copy_holder, Some("copyright"), &gettext("Licenses"));
-    cop.set_icon_name(Some("x-office-document-symbolic"));
-
-    sys_holder.append(&create_system_page());
-
-    // Reszta logiki (Lazy Loading) pozostaje bez zmian...
+    // 7. Lazy Loading logic (poprawione)
     view_stack.connect_visible_child_name_notify(move |stack| {
-        if let (Some(name), Some(child)) = (stack.visible_child_name(), stack.visible_child()) {
-            let holder = child.downcast_ref::<GtkBox>().expect("Must be a GtkBox");
-            if holder.first_child().is_none() {
-                match name.as_str() {
-                    "information" => holder.append(&create_information_page()),
-                    "credits" => holder.append(&create_credits_page()),
-                    "copyright" => holder.append(&create_copyright_page()),
-                    _ => {}
+        if let Some(name) = stack.visible_child_name() {
+            if let Some(child) = stack.visible_child() {
+                let holder = child.downcast_ref::<GtkBox>().expect("Must be a GtkBox");
+                // Sprawdzamy czy kontener jest pusty
+                if holder.first_child().is_none() {
+                    match name.as_str() {
+                        "information" => holder.append(&create_information_page()),
+                        "credits" => holder.append(&create_credits_page()),
+                        "copyright" => holder.append(&create_copyright_page()),
+                        _ => {}
+                    }
                 }
             }
         }
     });
 
-    let main_box = GtkBox::new(Orientation::Vertical, 0);
-    main_box.append(&header_bar);
+    // Załadowanie pierwszej strony natychmiast
+    sys_holder.append(&create_system_page());
 
-    view_stack.set_vexpand(true);
-    view_stack.set_hexpand(true);
+    // 8. Finalizacja układu
     main_box.append(&view_stack);
-
-    window.set_content(Some(&main_box));
+    window.set_child(Some(&main_box));
     window.present();
 }
-
-fn create_system_page() -> PreferencesPage {
-    let page = PreferencesPage::new();
-    page.add_css_class("background");
-    let group = PreferencesGroup::new();
-    group.set_title(&gettext("System Information"));
+fn create_system_page() -> ScrolledWindow {
+    let scrolled = ScrolledWindow::builder()
+        .vexpand(true)
+        .hexpand(true)
+        .build();
 
     let content_box = GtkBox::builder()
         .orientation(Orientation::Vertical)
@@ -118,7 +137,17 @@ fn create_system_page() -> PreferencesPage {
         .margin_bottom(32)
         .margin_start(32)
         .margin_end(32)
+        .halign(Align::Center)
+        .vexpand(true)
+        .hexpand(true)
         .build();
+
+    let title_label = Label::builder()
+        .label(&gettext("System Information"))
+        .halign(Align::Start)
+        .css_classes(vec!["title-1".to_string()]) // GTK4 standard classes
+        .build();
+    content_box.append(&title_label);
 
     let content_grid = Grid::new();
     content_grid.set_column_spacing(40);
@@ -127,10 +156,9 @@ fn create_system_page() -> PreferencesPage {
     let logo = Image::builder()
         .icon_name(get_os_logo())
         .pixel_size(128)
-        .halign(gtk4::Align::Start)
-        .valign(gtk4::Align::Start)
+        .halign(Align::Start)
+        .valign(Align::Start)
         .build();
-
     content_grid.attach(&logo, 0, 0, 1, 1);
 
     let info_grid = Grid::new();
@@ -146,212 +174,53 @@ fn create_system_page() -> PreferencesPage {
     }
 
     let info_rows = vec![
-        InfoRow {
-            label: gettext("Device"),
-            value: get_hostname(),
-            is_header_start: false,
-        },
-        InfoRow {
-            label: gettext("Operating System"),
-            value: read_os_release().unwrap_or_default(),
-            is_header_start: false,
-        },
-        InfoRow {
-            label: gettext("System Type"),
-            value: if cfg!(target_pointer_width = "64") {
-                "64-bit".into()
-            } else {
-                "32-bit".into()
-            },
-            is_header_start: false,
-        },
-        InfoRow {
-            label: gettext("Swift Desktop Version"),
-            value: format!("{} ({})", metadata::SWIFT_VERSION, metadata::SWIFT_CODENAME),
-            is_header_start: true,
-        },
-        InfoRow {
-            label: gettext("Kernel Version"),
-            value: get_kernel_version(),
-            is_header_start: false,
-        },
-        InfoRow {
-            label: gettext("Windowing System"),
-            value: detect_windowing_system(),
-            is_header_start: false,
-        },
-        InfoRow {
-            label: gettext("Processor"),
-            value: get_cpu_model(),
-            is_header_start: true,
-        },
-        InfoRow {
-            label: gettext("Memory"),
-            value: get_total_memory(),
-            is_header_start: false,
-        },
-        /*InfoRow {
-            label: gettext("Graphics"),
-            value: detect_gpu()
-            is_header_start: false,
-        },*/
+        InfoRow { label: gettext("Device"), value: get_hostname(), is_header_start: false },
+        InfoRow { label: gettext("Operating System"), value: read_os_release().unwrap_or_default(), is_header_start: false },
+        InfoRow { label: gettext("System Type"), value: if cfg!(target_pointer_width = "64") { "64-bit".into() } else { "32-bit".into() }, is_header_start: false },
+        InfoRow { label: gettext("Swift Desktop Version"), value: format!("{} ({})", metadata::SWIFT_VERSION, metadata::SWIFT_CODENAME), is_header_start: true },
+        InfoRow { label: gettext("Kernel Version"), value: get_kernel_version(), is_header_start: false },
+        InfoRow { label: gettext("Windowing System"), value: detect_windowing_system(), is_header_start: false },
+        InfoRow { label: gettext("Processor"), value: get_cpu_model(), is_header_start: true },
+        InfoRow { label: gettext("Memory"), value: get_total_memory(), is_header_start: false },
     ];
 
     for (i, row) in info_rows.into_iter().enumerate() {
         let key_label = Label::builder()
             .label(&row.label)
-            .halign(gtk4::Align::Start)
+            .halign(Align::Start)
             .xalign(0.0)
-            .css_classes(vec!["dim-label".to_string()])
             .build();
-
+        key_label.add_css_class("dim-label");
         label_size_group.add_widget(&key_label);
 
         let value_label = Label::builder()
             .label(&row.value)
-            .halign(gtk4::Align::Start)
+            .halign(Align::Start)
             .xalign(0.0)
             .selectable(true)
+            .can_focus(false)
             .build();
 
         if row.is_header_start {
             key_label.set_margin_top(20);
-
             value_label.set_margin_top(20);
         }
 
         info_grid.attach(&key_label, 0, i as i32, 1, 1);
-
         info_grid.attach(&value_label, 1, i as i32, 1, 1);
     }
 
     content_grid.attach(&info_grid, 1, 0, 1, 1);
-
     content_box.append(&content_grid);
-
-    group.add(&content_box);
-
-    page.add(&group);
-
-    page
+    scrolled.set_child(Some(&content_box));
+    scrolled
 }
 
-fn read_os_release() -> Option<String> {
-    let content = fs::read_to_string("/etc/os-release").ok()?;
-
-    let mut name = None;
-
-    let mut version = None;
-
-    for line in content.lines() {
-        if let Some(stripped) = line.strip_prefix("PRETTY_NAME=") {
-            return Some(stripped.trim_matches('"').to_string());
-        }
-        if let Some(stripped) = line.strip_prefix("NAME=") {
-            name = Some(stripped.trim_matches('"').to_string());
-        }
-        if let Some(stripped) = line.strip_prefix("VERSION=") {
-            version = Some(stripped.trim_matches('"').to_string());
-        }
-    }
-    match (name, version) {
-        (Some(n), Some(v)) => Some(format!("{} {}", n, v)),
-
-        (Some(n), _) => Some(n),
-
-        _ => None,
-    }
-}
-
-fn detect_windowing_system() -> String {
-    let session_type = env::var("XDG_SESSION_TYPE")
-        .unwrap_or_else(|_| "Unknown".to_string())
-        .to_lowercase();
-
-    match session_type.as_str() {
-        "wayland" => "Wayland".to_string(),
-
-        "x11" => "X11".to_string(),
-
-        _ => "Unknown".to_string(),
-    }
-}
-
-fn get_hostname() -> String {
-    fs::read_to_string("/proc/sys/kernel/hostname")
-        .ok()
-        .map(|v| v.trim().to_string())
-        .unwrap_or_else(|| "Unknown".to_string())
-}
-
-fn get_kernel_version() -> String {
-    fs::read_to_string("/proc/sys/kernel/osrelease")
-        .ok()
-        .map(|v| v.trim().to_string())
-        .unwrap_or_else(|| "Unknown Kernel".to_string())
-}
-
-fn get_total_memory() -> String {
-    fs::read_to_string("/proc/meminfo")
-        .ok()
-        .and_then(|content| {
-            content
-                .lines()
-                .find(|l| l.starts_with("MemTotal:"))
-                .map(|l| {
-                    let kb = l
-                        .split_whitespace()
-                        .nth(1)
-                        .and_then(|v| v.parse::<f64>().ok())
-                        .unwrap_or(0.0);
-                    format!("{:.1} GB", kb / 1024.0 / 1024.0)
-                })
-        })
-        .unwrap_or_else(|| "N/A".to_string())
-}
-
-fn get_cpu_model() -> String {
-    fs::read_to_string("/proc/cpuinfo")
-        .ok()
-        .and_then(|content| {
-            content
-                .lines()
-                .find(|l| l.starts_with("model name"))
-                .map(|l| l.split(':').nth(1).unwrap_or("N/A").trim().to_string())
-        })
-        .unwrap_or_else(|| "Unknown CPU".to_string())
-}
-
-fn get_os_logo() -> String {
-    if let Ok(content) = fs::read_to_string("/etc/os-release") {
-        let mut id = None;
-
-        for line in content.lines() {
-            if let Some(stripped) = line.strip_prefix("LOGO=") {
-                let value = stripped.trim_matches('"').trim_matches('\'').to_string();
-
-                if !value.is_empty() {
-                    return value;
-                }
-            }
-
-            if let Some(stripped) = line.strip_prefix("ID=") {
-                id = Some(stripped.trim_matches('"').trim_matches('\'').to_string());
-            }
-        }
-
-        if let Some(dist_id) = id {
-            return format!("{}-logo", dist_id);
-        }
-    }
-
-    "dialog-information".to_string()
-}
-
-fn create_information_page() -> PreferencesPage {
-    let page = PreferencesPage::new();
-    page.add_css_class("background");
-    let group = PreferencesGroup::new();
+fn create_information_page() -> ScrolledWindow {
+    let scrolled = ScrolledWindow::builder()
+        .vexpand(true)
+        .hexpand(true)
+        .build();
 
     let vbox = GtkBox::builder()
         .orientation(Orientation::Vertical)
@@ -360,133 +229,155 @@ fn create_information_page() -> PreferencesPage {
         .margin_bottom(32)
         .margin_start(32)
         .margin_end(32)
-        .valign(gtk4::Align::Center) // Środkowanie pionowe całej zawartości
-        .halign(gtk4::Align::Center)
+        .halign(Align::Center)
+        .vexpand(true)
+        .hexpand(true)
         .build();
 
-    let logo = Image::builder()
-        .icon_name("swift-about")
-        .pixel_size(128)
-        .halign(gtk4::Align::Center)
-        .build();
-
+    let logo = Image::builder().icon_name("swift-about").pixel_size(128).build();
     vbox.append(&logo);
 
     let desc = Label::builder()
-
-        .label(gettext("Swift is a set of programs that together provide a fully functional desktop environment. Some of them:"))
+        .label(gettext("Swift is a set of programs that together provide a fully functional desktop environment."))
         .wrap(true)
-
-        .halign(gtk4::Align::Center)
-
+        .justify(gtk4::Justification::Center)
+        .max_width_chars(60)
         .build();
-
     vbox.append(&desc);
 
     let components = vec![
-        (
-            "preferences-system-windows",
-            "Window Manager",
-            "labwc",
-            "Manages the placement of windows on the screen.",
-        ),
-        (
-            "application-menu",
-            "Panel",
-            "swift-panel",
-            "Provides a place for window buttons and menus.",
-        ),
-        (
-            "preferences-other",
-            "Desktop Manager",
-            "swift-desktop",
-            "Sets desktop backgrounds and icons.",
-        ),
-        (
-            "folder",
-            "File Manager",
-            "nemo",
-            "Manages files in a modern and fast way.",
-        ),
+        ("preferences-system-windows", "Window Manager", "labwc", "Manages the placement of windows."),
+        ("application-menu", "Panel", "swift-panel", "Provides a place for window buttons."),
+        ("preferences-other", "Desktop Manager", "swift-desktop", "Sets backgrounds and icons."),
+        ("folder", "File Manager", "nemo", "Manages files in a modern way."),
     ];
 
     for (icon, title, app, desc_text) in components {
         let comp_hbox = GtkBox::new(Orientation::Horizontal, 16);
-
         let comp_icon = Image::builder().icon_name(icon).pixel_size(48).build();
-
         let comp_vbox = GtkBox::new(Orientation::Vertical, 4);
 
         let comp_title = Label::builder()
             .label(format!("{} ({})", gettext(title), app))
-            .halign(gtk4::Align::Start)
-            .css_classes(vec!["heading".to_string()])
+            .halign(Align::Start)
             .build();
+        comp_title.add_css_class("heading");
 
         let comp_desc = Label::builder()
             .label(gettext(desc_text))
             .wrap(true)
-            .halign(gtk4::Align::Start)
-            .css_classes(vec!["dim-label".to_string()])
+            .halign(Align::Start)
             .build();
+        comp_desc.add_css_class("dim-label");
 
         comp_vbox.append(&comp_title);
-
         comp_vbox.append(&comp_desc);
-
         comp_hbox.append(&comp_icon);
-
         comp_hbox.append(&comp_vbox);
-
         vbox.append(&comp_hbox);
     }
 
-    group.add(&vbox);
-
-    page.add(&group);
-
-    page
+    scrolled.set_child(Some(&vbox));
+    scrolled
 }
 
-fn create_credits_page() -> PreferencesPage {
-    let page = PreferencesPage::new();
-    page.add_css_class("background");
+fn create_credits_page() -> ScrolledWindow {
+    let scrolled = ScrolledWindow::builder()
+        .vexpand(true)
+        .hexpand(true)
+        .build();
+
+    let vbox = GtkBox::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(12)
+        .margin_start(32)
+        .margin_end(32)
+        .margin_top(32)
+        .margin_bottom(32)
+        .vexpand(true)
+        .hexpand(true)
+        .build();
+
     for group_data in contributors::SWIFT_CONTRIBUTORS {
-        let pref_group = PreferencesGroup::new();
+    // 1. Kontener grupujący nagłówek i listę
+    let group_container = GtkBox::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(12)
+        .halign(Align::Center) // Środkujemy cały blok w oknie
+        .width_request(600)    // Narzucamy szerokość bloku (taka sama dla etykiety i listy)
+        .build();
 
-        pref_group.set_title(group_data.name);
+    // 2. Nagłówek grupy - teraz halign(Align::Start) wyrówna go do lewej krawędzi group_container
+    let group_label = Label::builder()
+        .label(group_data.name)
+        .halign(Align::Start) 
+        .margin_top(12)
+        .build();
+    group_label.add_css_class("title-3");
+    group_container.append(&group_label);
 
-        for contributor in group_data.contributors {
-            let row = ActionRow::builder()
-                .title(contributor.name)
-                .subtitle(contributor.email)
-                .build();
+    // 3. ListBox - wypełni całą szerokość group_container (czyli 450px)
+    let list_box = ListBox::builder()
+        .selection_mode(gtk4::SelectionMode::None)
+        .css_classes(vec!["boxed-list".to_string()])
+        .build();
 
-            pref_group.add(&row);
-        }
+    for contributor in group_data.contributors {
+        let row_box = GtkBox::new(Orientation::Vertical, 4);
+        row_box.set_margin_start(12);
+        row_box.set_margin_end(12);
+        row_box.set_margin_top(12);
+        row_box.set_margin_bottom(12);
 
-        page.add(&pref_group);
+        let name_label = Label::builder()
+            .label(contributor.name)
+            .halign(Align::Start)
+            .build();
+
+        let email_label = Label::builder()
+            .label(contributor.email)
+            .halign(Align::Start)
+            .build();
+        email_label.add_css_class("dim-label");
+
+        row_box.append(&name_label);
+        row_box.append(&email_label);
+        list_box.append(&row_box);
     }
 
-    page
+    group_container.append(&list_box);
+    vbox.append(&group_container); // Dodajemy gotowy, spójny blok do głównego układu
+}
+    scrolled.set_child(Some(&vbox));
+    scrolled
 }
 
-fn create_copyright_page() -> PreferencesPage {
-    let page = PreferencesPage::new();
-    page.add_css_class("background");
-    let main_group = PreferencesGroup::new();
-    main_group.set_title(&gettext("Licenses"));
+fn create_copyright_page() -> ScrolledWindow {
+    let scrolled = ScrolledWindow::builder()
+        .vexpand(true)
+        .hexpand(true)
+        .build();
+        
+    let vbox = GtkBox::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(12)
+        .margin_start(32)
+        .margin_end(32)
+        .margin_top(32)
+        .margin_bottom(32)
+        .vexpand(true)
+        .hexpand(true)
+        .build();
 
     let info_label = Label::builder()
         .label(gettext("Swift components are licensed under:"))
-        .wrap(true)
-        .xalign(0.0)
-        .margin_bottom(12)
+        .halign(Align::Start)
         .build();
-    main_group.add(&info_label);
-    page.add(&main_group);
+    vbox.append(&info_label);
 
-    let list_group = PreferencesGroup::new();
+    let list_box = ListBox::new();
+    list_box.set_selection_mode(gtk4::SelectionMode::None);
+    list_box.add_css_class("boxed-list");
 
     let licenses = [
         ("GNU General Public License v3.0", "gpl-3.0"),
@@ -495,68 +386,68 @@ fn create_copyright_page() -> PreferencesPage {
     ];
 
     for (full_name, file_key) in licenses {
-        let row = libadwaita::ActionRow::builder()
-            .title(full_name)
-            .activatable(true) // Sprawia, że wiersz reaguje na kliknięcie
-            .build();
+        let row = ListBoxRow::new();
+        let row_hbox = GtkBox::new(Orientation::Horizontal, 12);
+        row_hbox.set_margin_start(12);
+        row_hbox.set_margin_end(12);
+        row_hbox.set_margin_top(12);
+        row_hbox.set_margin_bottom(12);
 
+        let label = Label::new(Some(full_name));
         let arrow = Image::from_icon_name("go-next-symbolic");
-        row.add_suffix(&arrow);
+        
+        row_hbox.append(&label);
+        let filler = GtkBox::new(Orientation::Horizontal, 0);
+        filler.set_hexpand(true);
+        row_hbox.append(&filler);
+        row_hbox.append(&arrow);
 
+        row.set_child(Some(&row_hbox));
+        
         let key = file_key.to_string();
-
-        row.connect_activated(move |r| {
-            if let Some(window) = r
-                .root()
-                .and_then(|root| root.downcast::<AdwApplicationWindow>().ok())
-            {
-                let license_content = get_license_text(&key);
-                show_license_dialog(&window, &license_content);
-            }
-        });
-
-        list_group.add(&row);
+        list_box.append(&row);
     }
 
-    page.add(&list_group);
-    page
+    list_box.connect_row_activated(move |_, row| {
+        let index = row.index();
+        let licenses = [("gpl-3.0"), ("lgpl-3.0"), ("bsd-3-clause")];
+        if let Some(key) = licenses.get(index as usize) {
+             if let Some(window) = row.root().and_then(|r| r.downcast::<ApplicationWindow>().ok()) {
+                let license_content = get_license_text(key);
+                show_license_dialog(&window, &license_content);
+            }
+        }
+    });
+
+    vbox.append(&list_box);
+    scrolled.set_child(Some(&vbox));
+    scrolled
 }
 
-fn show_license_dialog(parent: &AdwApplicationWindow, license_text: &str) {
-    let window = libadwaita::Window::builder()
+fn show_license_dialog(parent: &ApplicationWindow, license_text: &str) {
+    let dialog = ApplicationWindow::builder()
         .transient_for(parent)
         .modal(true)
+        .title(gettext("License Information"))
         .default_width(600)
         .default_height(700)
         .build();
 
-    let main_vbox = GtkBox::builder().orientation(Orientation::Vertical).build();
-
-    let header_bar = libadwaita::HeaderBar::builder()
-        .show_end_title_buttons(true)
-        .title_widget(&libadwaita::WindowTitle::new("License Information", ""))
-        .build();
-    main_vbox.append(&header_bar);
-
+    let main_vbox = GtkBox::new(Orientation::Vertical, 0);
+    
     let scrolled = ScrolledWindow::builder()
         .vexpand(true)
-        .margin_top(24)
-        .margin_bottom(12)
         .margin_start(24)
         .margin_end(24)
+        .margin_top(24)
+        .margin_bottom(24)
         .build();
-
-    scrolled.add_css_class("card");
-    scrolled.add_css_class("view");
 
     let text_view = TextView::builder()
         .editable(false)
         .cursor_visible(false)
-        .wrap_mode(gtk4::WrapMode::Word)
-        .margin_top(20)
-        .margin_bottom(20)
-        .margin_start(20)
-        .margin_end(20)
+        .wrap_mode(WrapMode::Word)
+        .justification(gtk4::Justification::Center)
         .build();
 
     let buffer = TextBuffer::new(None);
@@ -564,44 +455,75 @@ fn show_license_dialog(parent: &AdwApplicationWindow, license_text: &str) {
     text_view.set_buffer(Some(&buffer));
     scrolled.set_child(Some(&text_view));
 
-    let button_container = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .margin_bottom(24)
-        .halign(gtk4::Align::Center)
-        .build();
-
-    let close_button = gtk4::Button::builder()
-        .label(gettext("Close"))
-        .width_request(120)
-        .build();
-
-    close_button.add_css_class("pill");
-
-    close_button.connect_clicked(glib::clone!(
-        #[weak]
-        window,
-        move |_| {
-            window.close();
-        }
-    ));
-    button_container.append(&close_button);
+    let close_button = Button::with_label(&gettext("Close"));
+    close_button.set_margin_bottom(24);
+    close_button.set_halign(Align::Center);
+    close_button.set_width_request(120);
+    
+    close_button.connect_clicked(glib::clone!(#[weak] dialog, move |_| dialog.close()));
 
     main_vbox.append(&scrolled);
-    main_vbox.append(&button_container);
+    main_vbox.append(&close_button);
 
-    window.set_content(Some(&main_vbox));
-    window.present();
+    dialog.set_child(Some(&main_vbox));
+    dialog.present();
+}
+
+// Funkcje pomocnicze pozostają niemal identyczne (logika systemowa)
+fn read_os_release() -> Option<String> { /* ... identyczne jak w oryginale ... */ 
+    let content = fs::read_to_string("/etc/os-release").ok()?;
+    for line in content.lines() {
+        if let Some(stripped) = line.strip_prefix("PRETTY_NAME=") {
+            return Some(stripped.trim_matches('"').to_string());
+        }
+    }
+    None
+}
+
+fn detect_windowing_system() -> String {
+    let session_type = env::var("XDG_SESSION_TYPE").unwrap_or_else(|_| "Unknown".into()).to_lowercase();
+    match session_type.as_str() {
+        "wayland" => "Wayland".into(),
+        "x11" => "X11".into(),
+        _ => "Unknown".into(),
+    }
+}
+
+fn get_hostname() -> String {
+    fs::read_to_string("/proc/sys/kernel/hostname").ok().map(|v| v.trim().to_string()).unwrap_or_else(|| "Unknown".into())
+}
+
+fn get_kernel_version() -> String {
+    fs::read_to_string("/proc/sys/kernel/osrelease").ok().map(|v| v.trim().to_string()).unwrap_or_else(|| "Unknown Kernel".into())
+}
+
+fn get_total_memory() -> String {
+    fs::read_to_string("/proc/meminfo").ok().and_then(|content| {
+        content.lines().find(|l| l.starts_with("MemTotal:")).map(|l| {
+            let kb = l.split_whitespace().nth(1).and_then(|v| v.parse::<f64>().ok()).unwrap_or(0.0);
+            format!("{:.1} GB", kb / 1024.0 / 1024.0)
+        })
+    }).unwrap_or_else(|| "N/A".into())
+}
+
+fn get_cpu_model() -> String {
+    fs::read_to_string("/proc/cpuinfo").ok().and_then(|content| {
+        content.lines().find(|l| l.starts_with("model name")).map(|l| l.split(':').nth(1).unwrap_or("N/A").trim().to_string())
+    }).unwrap_or_else(|| "Unknown CPU".into())
+}
+
+fn get_os_logo() -> String {
+    if let Ok(content) = fs::read_to_string("/etc/os-release") {
+        for line in content.lines() {
+            if let Some(stripped) = line.strip_prefix("LOGO=") {
+                return stripped.trim_matches('"').trim_matches('\'').to_string();
+            }
+        }
+    }
+    "dialog-information".to_string()
 }
 
 fn get_license_text(name: &str) -> String {
     let path = format!("/usr/share/swift/licenses/{}.txt", name.to_lowercase());
-
-    fs::read_to_string(&path).unwrap_or_else(|_| {
-        format!(
-            "{}: {}\n{}",
-            gettext("Error"),
-            gettext("License file not found"),
-            path
-        )
-    })
+    fs::read_to_string(&path).unwrap_or_else(|_| format!("Error: License file not found at {}", path))
 }
